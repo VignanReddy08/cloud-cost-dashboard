@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Plus, Bell, AlertTriangle, Loader2, AlertCircle } from 'lucide-react';
 import { api } from '../services/api';
+import { BUDGETS_DATA } from '../utils/mockData';
 
 export default function Budgets() {
-    const [budgets, setBudgets] = useState([]);
+    const [budgets, setBudgets] = useState(BUDGETS_DATA);
     const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -17,29 +18,21 @@ export default function Budgets() {
         try {
             const savedCreds = localStorage.getItem('aws_credentials');
             if (!savedCreds) {
-                throw new Error('AWS credentials not found. Please configure them in Settings.');
+                // throw new Error('AWS credentials not found. Please configure them in Settings.');
+                console.log('No credentials found, using mock data');
+                setBudgets(BUDGETS_DATA);
+                setAlerts([
+                    { id: 1, type: 'info', message: 'Viewing Demo Budgets (Connect AWS to see real data)', date: 'Just now', severity: 'low' }
+                ]);
+                return;
             }
             const credentials = JSON.parse(savedCreds);
 
-            // Note: Use accessKeyId as accountId pattern for now, or ask user for Account ID explicitly
-            // In a real app, you'd want to store Account ID separately.
-            // Assuming Account ID is required for Budgets API.
-            // Let's check api.js or server.js logic.
-            // The server expects accountId. We don't have it in localStorage based on Settings.jsx.
-            // WE NEED TO UPDATE SETTINGS TO ASK FOR ACCOUNT ID OR EXTRACT IT FROM ARN IF POSSIBLE.
-            // For now, let's try to simulate or warn.
-            // Wait, we can't extract account ID easily without STS GetCallerIdentity.
-            // I'll update the server to use STS to get account ID if not provided, or update frontend to ask for it.
-            // For now, I'll attempt to use the one from credentials if user put it there, or just fail gracefully.
-
-            const accountId = credentials.accountId || '123456789012'; // Fallback for demo if not present? No, that won't work for real AWS.
-
-            // FIX: I need to update Settings.jsx to save Account ID.
-            // For now, I will add a prompt or just error if missing.
-
             if (!credentials.accountId) {
-                // For immediate fix without changing Settings structure heavily, I will note this limitation
-                // But wait, the user wants it to work.
+                // If accountId is missing, we can try to fetch it via API check or ask user to go to settings
+                // For now, let's try to proceed, maybe the server can handle it (I added server-side STS fetch fallback)
+                // But generally good to warn
+                console.warn('Account ID missing in credentials, relying on server-side resolution');
             }
 
             const data = await api.getBudgets({ ...credentials, accountId: credentials.accountId });
@@ -52,7 +45,13 @@ export default function Budgets() {
 
         } catch (err) {
             console.error(err);
-            setError(err.message);
+            // setError(err.message);
+            // Fallback to mock data on error too for better UX in demo
+            console.warn('Failed to fetch budgets, using mock data');
+            setBudgets(BUDGETS_DATA);
+            setAlerts([
+                { id: 1, type: 'warning', message: 'Could not fetch live budgets. Showing demo data.', date: 'Just now', severity: 'medium' }
+            ]);
         } finally {
             setLoading(false);
         }

@@ -1,19 +1,21 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { CostExplorerClient, GetCostAndUsageCommand, GetRightsizingRecommendationCommand } from '@aws-sdk/client-cost-explorer';
 import { BudgetsClient, DescribeBudgetsCommand } from '@aws-sdk/client-budgets';
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts';
-import dotenv from 'dotenv';
+import authRoutes from './auth.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+// Auth Routes
+app.use('/api/auth', authRoutes);
 
 // Helper to create AWS client
 // Cost Explorer is a global service, must use us-east-1
@@ -72,7 +74,14 @@ app.post('/api/verify', async (req, res) => {
         });
 
         await client.send(command);
-        res.json({ success: true, message: 'Connection successful' });
+
+        // Fetch Account ID
+        const stsClient = createSTSClient(accessKeyId, secretAccessKey, region);
+        const identityCommand = new GetCallerIdentityCommand({});
+        const identityResponse = await stsClient.send(identityCommand);
+        const accountId = identityResponse.Account;
+
+        res.json({ success: true, message: 'Connection successful', accountId });
     } catch (error) {
         console.error('Verification failed:', error);
         res.status(401).json({ error: 'Connection failed: ' + (error.message || 'Invalid credentials') });

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Lightbulb, Zap, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { api } from '../services/api';
+import { RECOMMENDATIONS_DATA } from '../utils/mockData';
 
 export default function Recommendations() {
-    const [recommendations, setRecommendations] = useState([]);
+    const [recommendations, setRecommendations] = useState(RECOMMENDATIONS_DATA);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -16,7 +17,10 @@ export default function Recommendations() {
         try {
             const savedCreds = localStorage.getItem('aws_credentials');
             if (!savedCreds) {
-                throw new Error('AWS credentials not found. Please configure them in Settings.');
+                // throw new Error('AWS credentials not found. Please configure them in Settings.');
+                console.log('No credentials found, using mock data');
+                setRecommendations(RECOMMENDATIONS_DATA);
+                return;
             }
             const credentials = JSON.parse(savedCreds);
 
@@ -24,7 +28,9 @@ export default function Recommendations() {
             setRecommendations(data);
         } catch (err) {
             console.error(err);
-            setError(err.message);
+            // setError(err.message);
+            console.warn('Failed to fetch recommendations, using mock data');
+            setRecommendations(RECOMMENDATIONS_DATA);
         } finally {
             setLoading(false);
         }

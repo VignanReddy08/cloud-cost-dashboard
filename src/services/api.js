@@ -1,8 +1,16 @@
+const getHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+};
+
 export const api = {
     verifyConnection: async (credentials) => {
         const response = await fetch('/api/verify', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getHeaders(),
             body: JSON.stringify(credentials),
         });
         if (!response.ok) {
@@ -15,7 +23,7 @@ export const api = {
     getCostData: async (credentials) => {
         const response = await fetch('/api/cost', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getHeaders(),
             body: JSON.stringify({ ...credentials, days: 14 }),
         });
         if (!response.ok) {
@@ -28,7 +36,7 @@ export const api = {
     getBudgets: async (credentials) => {
         const response = await fetch('/api/budgets', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getHeaders(),
             body: JSON.stringify(credentials),
         });
         if (!response.ok) {
@@ -41,7 +49,7 @@ export const api = {
     getRecommendations: async (credentials) => {
         const response = await fetch('/api/recommendations', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getHeaders(),
             body: JSON.stringify(credentials),
         });
         if (!response.ok) {

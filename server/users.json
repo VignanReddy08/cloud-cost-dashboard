@@ -1,0 +1,18 @@
+[
+  {
+    "id": "1771525586050",
+    "email": "saivignanreddy000@gmail.com",
+    "password": "$2b$10$nIaWZil3lnVrQJnOGjKSSuXDHJP.CK7C0/s8DeeTJxW2IHpqjAw7e",
+    "verified": true,
+    "verificationCode": null,
+    "createdAt": "2026-02-19T18:26:26.050Z"
+  },
+  {
+    "id": "1771525682480",
+    "email": "psaivignanreddy@gmail.com",
+    "password": "$2b$10$my2nuAz.xLd7FfkgWLZ23eThBq0ai85Q53F/R5Oaxt8QILo.0hjEK",
+    "verified": true,
+    "verificationCode": null,
+    "createdAt": "2026-02-19T18:28:02.480Z"
+  }
+]

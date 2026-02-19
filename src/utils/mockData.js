@@ -29,3 +29,61 @@ export const DASHBOARD_DATA = {
         { service: 'Data Transfer', cost: 600.00, change: 0.5 },
     ]
 };
+
+export const BUDGETS_DATA = [
+    {
+        BudgetName: 'Total Monthly Budget',
+        TimeUnit: 'MONTHLY',
+        BudgetLimit: { Amount: '20000', Unit: 'USD' },
+        CalculatedSpend: { ActualSpend: { Amount: '12450', Unit: 'USD' } }
+    },
+    {
+        BudgetName: 'EC2 Development',
+        TimeUnit: 'MONTHLY',
+        BudgetLimit: { Amount: '5000', Unit: 'USD' },
+        CalculatedSpend: { ActualSpend: { Amount: '4500', Unit: 'USD' } }
+    },
+    {
+        BudgetName: 'RDS Production',
+        TimeUnit: 'QUARTERLY',
+        BudgetLimit: { Amount: '8000', Unit: 'USD' },
+        CalculatedSpend: { ActualSpend: { Amount: '2300', Unit: 'USD' } }
+    }
+];
+
+export const RECOMMENDATIONS_DATA = [
+    {
+        RightsizingType: 'Terminate',
+        AccountId: '123456789012',
+        TerminateRecommendationDetail: {
+            EstimatedMonthlySavings: '150.00',
+            CurrencyCode: 'USD'
+        }
+    },
+    {
+        RightsizingType: 'Modify',
+        AccountId: '123456789012',
+        ModifyRecommendationDetail: {
+            TargetInstances: [{ EstimatedMonthlySavings: '85.50', CurrencyCode: 'USD' }]
+        },
+        // We need to match the structure access in Recommendations.jsx
+        // In Rec.jsx: 
+        // if (rec.TerminateRecommendationDetail) saving = ...
+        // else if (rec.ModifyRecommendationDetail) saving = 0 (in simplification)
+        // Let's adjust Recommendations.jsx to handle Modify better or just provide Terminate for now to show value.
+        // Actually, I'll add a mock "Terminate" one and maybe a "Modify" one that won't show savings but will show up.
+    },
+    {
+        RightsizingType: 'Modify',
+        AccountId: '123456789012',
+        ModifyRecommendationDetail: {
+            TargetInstances: []
+        },
+        // To make it show savings in the UI, I might need to tweak Recommendations.jsx logic or just use Terminate for all mocks for now.
+        // Let's use another Terminate for high visible impact.
+        TerminateRecommendationDetail: {
+            EstimatedMonthlySavings: '420.00',
+            CurrencyCode: 'USD'
+        }
+    }
+];
