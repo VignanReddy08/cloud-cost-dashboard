@@ -5,8 +5,10 @@ import CostTrendChart from '../components/dashboard/CostTrendChart';
 import TopSpenders from '../components/dashboard/TopSpenders';
 import { DASHBOARD_DATA } from '../utils/mockData';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
+    const { user } = useAuth();
     const [data, setData] = useState(DASHBOARD_DATA);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -60,10 +62,12 @@ export default function Dashboard() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                        Welcome back, {user?.name ? user.name.split(' ')[0] : 'User'}! 👋
+                    </h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                         {usingRealData ? 'Viewing real data from AWS.' : 'Viewing demo data. Connect AWS in Settings.'}
                     </p>
                 </div>
@@ -72,12 +76,12 @@ export default function Dashboard() {
                     <button
                         onClick={fetchData}
                         disabled={isLoading}
-                        className={`text-sm text-gray-500 bg-white px-3 py-1 rounded-md border shadow-sm border-gray-200 flex items-center gap-2 hover:bg-gray-50 ${isLoading ? 'opacity-50' : ''}`}
+                        className="btn-secondary py-1.5"
                     >
                         <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
                         {isLoading ? 'Updating...' : 'Refresh'}
                     </button>
-                    <div className="text-sm text-gray-500 bg-white px-3 py-1 rounded-md border shadow-sm border-gray-200">
+                    <div className="text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-3 py-1 rounded-md border border-gray-200 dark:border-gray-700 shadow-sm">
                         {usingRealData ? 'Live Data' : 'Demo Mode'}
                     </div>
                 </div>

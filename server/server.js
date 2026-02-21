@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { CostExplorerClient, GetCostAndUsageCommand, GetRightsizingRecommendationCommand } from '@aws-sdk/client-cost-explorer';
-import { BudgetsClient, DescribeBudgetsCommand } from '@aws-sdk/client-budgets';
+import { BudgetsClient, DescribeBudgetsCommand, CreateBudgetCommand } from '@aws-sdk/client-budgets';
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts';
 import authRoutes from './auth.js';
 import { fileURLToPath } from 'url';
@@ -19,27 +19,29 @@ app.use('/api/auth', authRoutes);
 
 // Helper to create AWS client
 // Cost Explorer is a global service, must use us-east-1
-const createClient = (accessKeyId, secretAccessKey, region = 'us-east-1') => {
+const createClient = (accessKeyId, secretAccessKey, region = 'us-east-1', sessionToken) => {
     return new CostExplorerClient({
         region: 'us-east-1',
         credentials: {
             accessKeyId,
             secretAccessKey,
+            ...(sessionToken && { sessionToken }),
         },
     });
 };
 
-const createBudgetsClient = (accessKeyId, secretAccessKey, region = 'us-east-1') => {
+const createBudgetsClient = (accessKeyId, secretAccessKey, region = 'us-east-1', sessionToken) => {
     return new BudgetsClient({
         region: 'us-east-1',
         credentials: {
             accessKeyId,
             secretAccessKey,
+            ...(sessionToken && { sessionToken }),
         },
     });
 };
 
-const createSTSClient = (accessKeyId, secretAccessKey, region = 'us-east-1') => {
+const createSTSClient = (accessKeyId, secretAccessKey, region = 'us-east-1', sessionToken) => {
     // Map 'global' to us-east-1 or ensure valid region
     const validRegion = (!region || region.toLowerCase() === 'global') ? 'us-east-1' : region;
     return new STSClient({
@@ -47,20 +49,21 @@ const createSTSClient = (accessKeyId, secretAccessKey, region = 'us-east-1') => 
         credentials: {
             accessKeyId,
             secretAccessKey,
+            ...(sessionToken && { sessionToken }),
         },
     });
 };
 
 // Verify credentials
 app.post('/api/verify', async (req, res) => {
-    const { accessKeyId, secretAccessKey, region } = req.body;
+    const { accessKeyId, secretAccessKey, sessionToken, region } = req.body;
 
     if (!accessKeyId || !secretAccessKey) {
         return res.status(400).json({ error: 'Missing credentials' });
     }
 
     try {
-        const client = createClient(accessKeyId, secretAccessKey, region);
+        const client = createClient(accessKeyId, secretAccessKey, region, sessionToken);
         // Try a simple command to verify permissions
         // We'll ask for 1 day of data just to check if auth works
         const now = new Date();
@@ -76,7 +79,7 @@ app.post('/api/verify', async (req, res) => {
         await client.send(command);
 
         // Fetch Account ID
-        const stsClient = createSTSClient(accessKeyId, secretAccessKey, region);
+        const stsClient = createSTSClient(accessKeyId, secretAccessKey, region, sessionToken);
         const identityCommand = new GetCallerIdentityCommand({});
         const identityResponse = await stsClient.send(identityCommand);
         const accountId = identityResponse.Account;
@@ -91,14 +94,14 @@ app.post('/api/verify', async (req, res) => {
 // Fetch Cost Trend
 // Fetch Cost Data
 app.post('/api/cost', async (req, res) => {
-    const { accessKeyId, secretAccessKey, region, days = 14 } = req.body;
+    const { accessKeyId, secretAccessKey, sessionToken, region, days = 14 } = req.body;
 
     if (!accessKeyId || !secretAccessKey) {
         return res.status(400).json({ error: 'Missing credentials' });
     }
 
     try {
-        const client = createClient(accessKeyId, secretAccessKey, region);
+        const client = createClient(accessKeyId, secretAccessKey, region, sessionToken);
 
         const endDate = new Date();
         // AWS End date is exclusive, so to include 'today', we need 'tomorrow'
@@ -169,7 +172,7 @@ app.post('/api/cost', async (req, res) => {
 
 // Fetch Budgets
 app.post('/api/budgets', async (req, res) => {
-    const { accessKeyId, secretAccessKey, region, accountId } = req.body;
+    const { accessKeyId, secretAccessKey, sessionToken, region, accountId } = req.body;
 
     if (!accessKeyId || !secretAccessKey) {
         return res.status(400).json({ error: 'Missing credentials' });
@@ -180,13 +183,13 @@ app.post('/api/budgets', async (req, res) => {
 
         // If accountId is not provided, fetch it using STS
         if (!targetAccountId) {
-            const stsClient = createSTSClient(accessKeyId, secretAccessKey, region);
+            const stsClient = createSTSClient(accessKeyId, secretAccessKey, region, sessionToken);
             const identityCommand = new GetCallerIdentityCommand({});
             const identityResponse = await stsClient.send(identityCommand);
             targetAccountId = identityResponse.Account;
         }
 
-        const client = createBudgetsClient(accessKeyId, secretAccessKey, region);
+        const client = createBudgetsClient(accessKeyId, secretAccessKey, region, sessionToken);
         const command = new DescribeBudgetsCommand({ AccountId: targetAccountId });
         const response = await client.send(command);
         res.json(response.Budgets || []);
@@ -197,16 +200,78 @@ app.post('/api/budgets', async (req, res) => {
     }
 });
 
+// Create Budget
+app.post('/api/budgets/create', async (req, res) => {
+    const { accessKeyId, secretAccessKey, sessionToken, region, accountId, budgetName, limitAmount, timeUnit, alertEmail } = req.body;
+
+    if (!accessKeyId || !secretAccessKey || !budgetName || !limitAmount) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    try {
+        let targetAccountId = accountId;
+        if (!targetAccountId) {
+            const stsClient = createSTSClient(accessKeyId, secretAccessKey, region, sessionToken);
+            const identityCommand = new GetCallerIdentityCommand({});
+            const identityResponse = await stsClient.send(identityCommand);
+            targetAccountId = identityResponse.Account;
+        }
+
+        const client = createBudgetsClient(accessKeyId, secretAccessKey, region, sessionToken);
+
+        const budgetPayload = {
+            AccountId: targetAccountId,
+            Budget: {
+                BudgetName: budgetName,
+                BudgetLimit: {
+                    Amount: limitAmount.toString(),
+                    Unit: 'USD'
+                },
+                BudgetType: 'COST',
+                TimeUnit: timeUnit || 'MONTHLY'
+            }
+        };
+
+        // Add email alerts if requested
+        if (alertEmail) {
+            budgetPayload.NotificationsWithSubscribers = [
+                {
+                    Notification: {
+                        NotificationType: 'ACTUAL',
+                        ComparisonOperator: 'GREATER_THAN',
+                        Threshold: 90,
+                        ThresholdType: 'PERCENTAGE'
+                    },
+                    Subscribers: [
+                        {
+                            SubscriptionType: 'EMAIL',
+                            Address: alertEmail
+                        }
+                    ]
+                }
+            ];
+        }
+
+        const command = new CreateBudgetCommand(budgetPayload);
+        const response = await client.send(command);
+
+        res.json({ success: true, message: 'Budget created successfully', response });
+    } catch (error) {
+        console.error('Create budget failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Fetch Recommendations
 app.post('/api/recommendations', async (req, res) => {
-    const { accessKeyId, secretAccessKey, region } = req.body;
+    const { accessKeyId, secretAccessKey, sessionToken, region } = req.body;
 
     if (!accessKeyId || !secretAccessKey) {
         return res.status(400).json({ error: 'Missing credentials' });
     }
 
     try {
-        const client = createClient(accessKeyId, secretAccessKey, region);
+        const client = createClient(accessKeyId, secretAccessKey, region, sessionToken);
         const command = new GetRightsizingRecommendationCommand({
             Service: 'AmazonEC2',
             Configuration: {

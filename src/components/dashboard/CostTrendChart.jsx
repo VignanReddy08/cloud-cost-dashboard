@@ -2,8 +2,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 export default function CostTrendChart({ data }) {
     return (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-96">
-            <h3 className="text-lg font-bold text-gray-900 mb-6">Cost Trend (Last 14 Days)</h3>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 h-96 transition-colors duration-300">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Cost Trend (Last 14 Days)</h3>
             <div className="h-full pb-6">
                 <ResponsiveContainer width="100%" height="90%">
                     <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -13,7 +13,7 @@ export default function CostTrendChart({ data }) {
                                 <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
                             </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" className="dark:opacity-20" />
                         <XAxis
                             dataKey="date"
                             axisLine={false}
@@ -28,8 +28,8 @@ export default function CostTrendChart({ data }) {
                             tickFormatter={(value) => `$${value}`}
                         />
                         <Tooltip
-                            contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                            itemStyle={{ color: '#1f2937' }}
+                            contentStyle={{ backgroundColor: 'var(--tw-colors-gray-900, #111827)', color: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                            itemStyle={{ color: '#fff' }}
                             formatter={(value) => [`$${value}`, 'Cost']}
                         />
                         <Area

@@ -10,10 +10,40 @@ export default function VerifyEmail() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
+    const [resendDisabled, setResendDisabled] = useState(false);
+    const [timer, setTimer] = useState(0);
 
-    const { verifyEmail } = useAuth();
+    const { verifyEmail, resendCode } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+
+    useEffect(() => {
+        let interval;
+        if (resendDisabled && timer > 0) {
+            interval = setInterval(() => {
+                setTimer((prev) => prev - 1);
+            }, 1000);
+        } else if (timer === 0) {
+            setResendDisabled(false);
+        }
+        return () => clearInterval(interval);
+    }, [resendDisabled, timer]);
+
+    const handleResend = async () => {
+        setError('');
+        setSuccess('');
+        setResendDisabled(true);
+        setTimer(60); // 60 seconds cooldown
+
+        try {
+            await resendCode(email);
+            setSuccess('Verification code resent successfully!');
+        } catch (err) {
+            setError(err.message || 'Failed to resend code');
+            setResendDisabled(false);
+            setTimer(0);
+        }
+    };
 
     useEffect(() => {
         if (location.state?.email) {
@@ -23,10 +53,21 @@ export default function VerifyEmail() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        console.log('Submitting verification code', { email, code });
         setError('');
         setLoading(true);
         try {
-            await verifyEmail(email, code);
+            const cleanEmail = email ? email.trim() : '';
+            const cleanCode = code ? code.trim() : '';
+
+            if (!cleanEmail) {
+                throw new Error('Email is required');
+            }
+            if (!cleanCode) {
+                throw new Error('Verification code is required');
+            }
+
+            await verifyEmail(cleanEmail, cleanCode);
             setSuccess('Email verified successfully! Redirecting to login...');
             setTimeout(() => {
                 navigate('/login');
@@ -95,12 +136,23 @@ export default function VerifyEmail() {
 
                     <button
                         type="submit"
-                        disabled={loading || success}
-                        className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                        disabled={loading || !!success}
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium transition-all duration-300 hover:bg-indigo-600 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:pointer-events-none w-full mt-4"
                     >
-                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
                         {loading ? 'Verifying...' : 'Verify Email'}
                     </button>
+
+                    <div className="text-center mt-4">
+                        <button
+                            type="button"
+                            onClick={handleResend}
+                            disabled={resendDisabled || loading}
+                            className="text-sm text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {resendDisabled ? `Resend Code in ${timer}s` : 'Resend Code'}
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>

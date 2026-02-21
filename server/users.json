@@ -2,10 +2,12 @@
   {
     "id": "1771525586050",
     "email": "saivignanreddy000@gmail.com",
-    "password": "$2b$10$nIaWZil3lnVrQJnOGjKSSuXDHJP.CK7C0/s8DeeTJxW2IHpqjAw7e",
+    "password": "$2b$10$1rvM0X7nw5MqoZ6J4MawLeenu/tPaKSGQ/JFWur6YGnVwe7FG4d/O",
     "verified": true,
     "verificationCode": null,
-    "createdAt": "2026-02-19T18:26:26.050Z"
+    "createdAt": "2026-02-19T18:26:26.050Z",
+    "resetToken": null,
+    "resetTokenExpiry": null
   },
   {
     "id": "1771525682480",
@@ -14,5 +16,34 @@
     "verified": true,
     "verificationCode": null,
     "createdAt": "2026-02-19T18:28:02.480Z"
+  },
+  {
+    "id": "1771574398919",
+    "email": "saivignan712@gmail.com",
+    "password": "$2b$10$RWYJttIP1/fRYJRn7M1T/O.CeoqiYrKf7aDbUrY3JJ9Q602lmdnwq",
+    "verified": true,
+    "verificationCode": null,
+    "createdAt": "2026-02-20T07:59:58.919Z",
+    "name": "vignan"
+  },
+  {
+    "id": "1771647528932",
+    "name": "harsha",
+    "email": "peravalisriharsha12@gmail.com",
+    "password": "$2b$10$1Knb0EPRi9EQvUySvWXQs.NOUV7uGS1ACGRnkCCW6LV83WwyzCj9m",
+    "verified": true,
+    "verificationCode": null,
+    "createdAt": "2026-02-21T04:18:48.932Z",
+    "resetToken": null,
+    "resetTokenExpiry": null
+  },
+  {
+    "id": "1771648277506",
+    "name": "maha",
+    "email": "mahepeddi90@gmail.com",
+    "password": "$2b$10$QvsVlmDW1KdUgvbvQ9um1.IdmSAR5IzQ55hGXTnEHyMvXLjHqGqoG",
+    "verified": true,
+    "verificationCode": null,
+    "createdAt": "2026-02-21T04:31:17.506Z"
   }
 ]
